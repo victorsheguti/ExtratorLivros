@@ -79,15 +79,16 @@ def search_google_books_api(ean: str) -> Dict[str, str]:
 
     Returns:
         Um dicionário contendo 'EAN/ISBN', 'titulo', 'autor' e 'editora'. 
-        Retorna "Não Encontrado" para campos ausentes ou em caso de falha.
+        Retorna "error_..." para campos ausentes ou em caso de falha. # Comentário Atualizado
     """
     logging.info(f"Fase 1: Buscando metadados para EAN/ISBN: {ean}...")
     
+    # NOVOS PLACEHOLDERS DE ERRO
     metadata = {
         "EAN/ISBN": ean,
-        "titulo": "Não Encontrado",
-        "autor": "Não Encontrado",
-        "editora": "Não Encontrado"
+        "titulo": "error_title", # Alterado
+        "autor": "error_author", # Alterado
+        "editora": "error_publisher" # Alterado
     }
     
     try:
@@ -112,12 +113,12 @@ def search_google_books_api(ean: str) -> Dict[str, str]:
             elif titulo_principal:
                 titulo_completo = titulo_principal
             else:
-                titulo_completo = "Não Encontrado"
+                titulo_completo = "error_title" # Mantém o placeholder se principal estiver ausente
 
 
             metadata["titulo"] = titulo_completo
-            metadata["autor"] = ", ".join(autores) if autores else "Não Encontrado"
-            metadata["editora"] = editora if editora else "Não Encontrado"
+            metadata["autor"] = ", ".join(autores) if autores else "error_author" # Alterado
+            metadata["editora"] = editora if editora else "error_publisher" # Alterado
             
             logging.info("Metadados encontrados com sucesso.")
             return metadata
@@ -133,6 +134,8 @@ def search_google_books_api(ean: str) -> Dict[str, str]:
         # Loga qualquer outro erro (parsing de JSON, etc.) e retorna o dicionário padrão
         logging.error(f"Erro inesperado na Fase 1 para {ean}: {e}")
         return metadata 
+
+# ... restante do código ...
 
 # ----------------------------------------------------------------------
 # FASE 2: EXTRAÇÃO DE PREÇOS (Gemini API Otimizada)
@@ -253,8 +256,9 @@ def extract_book_data_full(ean: str) -> Dict[str, Any]:
     price_data = prices
     
     # Obtém preços com fallback.
-    preco_sem_desc = price_data.get("precoSemDesconto", "N/A (Fase 2 Falhou)")
-    preco_com_desc = price_data.get("precoComDesconto", "N/A (Fase 2 Falhou)")
+    # NOVOS PLACEHOLDERS DE ERRO PARA PREÇOS:
+    preco_sem_desc = price_data.get("precoSemDesconto", "error_price") # Alterado
+    preco_com_desc = price_data.get("precoComDesconto", "error_wdiscount") # Alterado
 
     # Aplica a formatação de moeda se os dados foram encontrados
     formatted_preco_sem_desc = format_currency(preco_sem_desc)
@@ -263,9 +267,9 @@ def extract_book_data_full(ean: str) -> Dict[str, Any]:
     # Combina e formata os resultados
     result = {
         "EAN/ISBN": ean,
-        "titulo": metadata.get("titulo", "N/A"),
-        "autor": metadata.get("autor", "N/A"),
-        "editora": metadata.get("editora", "N/A"),
+        "titulo": metadata.get("titulo", "error_title"), # Mantém a consistência
+        "autor": metadata.get("autor", "error_author"), # Mantém a consistência
+        "editora": metadata.get("editora", "error_publisher"), # Mantém a consistência
         "precoSemDesconto": formatted_preco_sem_desc,
         "precoComDesconto": formatted_preco_com_desc
     }
